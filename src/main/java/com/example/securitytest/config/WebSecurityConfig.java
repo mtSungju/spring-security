@@ -5,8 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -14,8 +16,13 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @RequiredArgsConstructor
 @EnableWebSecurity
-@Configuration
-public class WebSecurityConfig {
+@Configuration // configuration class 등록
+public class WebSecurityConfig  {
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder(){ // 암화화 해주는 역활(해시)
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -34,32 +41,46 @@ public class WebSecurityConfig {
         /*
          * SpringSecurityFilterChain 부분에 formLogin 부분을 추가해 주시면 설정 클래스를 만들지 않았을 때처럼 Spring에서 제공하는 화면이 기본 화면이 됩니다.
          * */
-        http.authorizeHttpRequests((authorizeRequests)->
-                authorizeRequests
+        http.authorizeHttpRequests((auth)->
+                auth
+                        .requestMatchers("/","/login", "/join", "/joinProc").permitAll()
                         .requestMatchers("/api1").hasRole("user")
                         .requestMatchers("/api2").hasRole("admin")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // 나머지경로 처리
 
-        ).formLogin((formLogin)->formLogin
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .defaultSuccessUrl("/", true)
         );
+
+        http
+                .formLogin((auth)->auth.loginPage("/login")
+                        .loginProcessingUrl("/loginProc")
+                        .permitAll()
+                );
+
+        http
+                .csrf((auth)-> auth.disable());
+
+//        .formLogin((formLogin)->formLogin
+//                .usernameParameter("username")
+//                .passwordParameter("password")
+//                .defaultSuccessUrl("/", true)
+//        );
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(){
 
-        /*
-        결국 로그인 처리가 되면 UserDetailsSerive 객체가 반환되게 되는데요.
-         이 부분의 아이디가 user1이고 패스워드가 1234인 유저정보를 픽스하기 위해 임의로 내용을 추가하였습니다.
-        **/
 
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-        manager.createUser(User.withUsername("user1").password("1234").roles("user").build());
-        return manager;
-    }
+//    @Bean
+//    public UserDetailsService userDetailsService(){
+//
+//        /*
+//        결국 로그인 처리가 되면 UserDetailsSerive 객체가 반환되게 되는데요.
+//         이 부분의 아이디가 user1이고 패스워드가 1234인 유저정보를 픽스하기 위해 임의로 내용을 추가하였습니다.
+//        **/
+//
+//        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+//        manager.createUser(User.withUsername("user1").password("1234").roles("user").build());
+//        return manager;
+//    }
 
     @Bean
     public PasswordEncoder passwordEncoder(){
