@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,8 +16,8 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @RequiredArgsConstructor
-@EnableWebSecurity
 @Configuration // configuration class 등록
+@EnableWebSecurity
 public class WebSecurityConfig  {
 
     @Bean
@@ -41,23 +42,24 @@ public class WebSecurityConfig  {
         /*
          * SpringSecurityFilterChain 부분에 formLogin 부분을 추가해 주시면 설정 클래스를 만들지 않았을 때처럼 Spring에서 제공하는 화면이 기본 화면이 됩니다.
          * */
+        // 경로 요청 허용
         http.authorizeHttpRequests((auth)->
                 auth
-                        .requestMatchers("/","/login", "/join", "/joinProc").permitAll()
-                        .requestMatchers("/api1").hasRole("user")
-                        .requestMatchers("/api2").hasRole("admin")
-                        .anyRequest().authenticated() // 나머지경로 처리
+                        .requestMatchers("/","/login", "loginProc", "/join", "/joinProc").permitAll() // permitAll 모든사용자에게 허용한다
+                        .requestMatchers("/admin").hasRole("ADMIN") // role이 있어야 접근가능
+                        .anyRequest().authenticated() // 나머지경로 허용.로그인만 진행하면
 
         );
 
         http
                 .formLogin((auth)->auth.loginPage("/login")
                         .loginProcessingUrl("/loginProc")
+                        .defaultSuccessUrl("/admin")
                         .permitAll()
                 );
 
         http
-                .csrf((auth)-> auth.disable());
+                .csrf(AbstractHttpConfigurer::disable);
 
 //        .formLogin((formLogin)->formLogin
 //                .usernameParameter("username")
@@ -82,8 +84,14 @@ public class WebSecurityConfig  {
 //        return manager;
 //    }
 
+
+
+
+
     @Bean
     public PasswordEncoder passwordEncoder(){
         return NoOpPasswordEncoder.getInstance();
     }
+
+
 }

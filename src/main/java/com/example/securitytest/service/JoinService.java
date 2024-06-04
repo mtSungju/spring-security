@@ -28,10 +28,10 @@ public class JoinService {
         UserEntitiy data = new UserEntitiy();
 
         data.setUsername(joinDTO.getUsername());
-        data.setPassword(bCryptPasswordEncoder.encode(joinDTO.getPassword()));
-        data.setRole("ROLE_USER");
+        data.setPassword("{noop}" + bCryptPasswordEncoder.encode(joinDTO.getPassword()));
+        data.setRole("ROLE_ADMIN");
 
-        log.info("encode_pwd :{}", bCryptPasswordEncoder.encode(joinDTO.getPassword()));
+        log.info("encode_pwd :{}", data.getPassword());
 
         userRepository.save(data);
 
